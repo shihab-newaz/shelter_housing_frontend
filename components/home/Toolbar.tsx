@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Facebook, Linkedin, Phone } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { toolbarItems } from "@/constants"
 
@@ -10,12 +10,12 @@ import { toolbarItems } from "@/constants"
 export default function Toolbar() {
   const [isHovered, setIsHovered] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
-  const [phoneHref, setPhoneHref] = useState('tel:+15551234567')
+  const [phoneHref, setPhoneHref] = useState('tel:+01755605080')
 
   // Update phone href based on device type
   useEffect(() => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-    setPhoneHref(isMobile ? 'tel:+15551234567' : 'callto:+15551234567')
+    setPhoneHref(isMobile ? 'tel:+01755605080' : 'callto:+01755605080')
   }, [])
 
   const handlePhoneClick = (e: React.MouseEvent) => {
@@ -25,7 +25,7 @@ export default function Toolbar() {
       window.location.href = phoneHref
       // Fallback to tel: if callto: doesn't work
       setTimeout(() => {
-        window.location.href = 'tel:+15551234567'
+        window.location.href = 'tel:+01755605080'
       }, 100)
     }
   }
