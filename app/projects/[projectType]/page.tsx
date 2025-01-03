@@ -5,15 +5,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { projects } from '@/constants'
+import { Metadata } from 'next'
 
 /**
- * Valid project types for type checking and validation
+ * Type definitions for project-related data structures
  */
 type ProjectType = 'upcoming' | 'ongoing' | 'completed'
 
-/**
- * Project data interface
- */
 interface Project {
   id: number
   title: string
@@ -24,28 +22,33 @@ interface Project {
   progress?: number
 }
 
+interface PageProps {
+  params: {
+    projectType: ProjectType
+  }
+}
+
+/**
+ * Valid project types for validation
+ */
+const VALID_PROJECT_TYPES: ProjectType[] = ['upcoming', 'ongoing', 'completed']
+
 /**
  * Generate static paths for all project type pages
- * @returns {Array<{projectType: string}>} Array of valid project types for static generation
  */
-export async function generateStaticParams() {
-  return [
-    { projectType: 'upcoming' },
-    { projectType: 'ongoing' },
-    { projectType: 'completed' },
-  ]
+export function generateStaticParams() {
+  return VALID_PROJECT_TYPES.map(type => ({
+    projectType: type
+  }))
 }
 
 /**
  * Generate metadata for SEO optimization
- * @param {Object} params - Page parameters containing project type
- * @returns {Object} Metadata object with title and description
  */
-export function generateMetadata({ params }: { params: { projectType: string } }) {
-  const validTypes = ['upcoming', 'ongoing', 'completed']
+export function generateMetadata({ params }: PageProps): Metadata {
   const type = params.projectType.toLowerCase()
 
-  if (!validTypes.includes(type)) {
+  if (!VALID_PROJECT_TYPES.includes(type as ProjectType)) {
     return {
       title: 'Not Found',
       description: 'The page you are looking for does not exist.',
@@ -61,9 +64,6 @@ export function generateMetadata({ params }: { params: { projectType: string } }
 
 /**
  * Project card component for displaying individual project information
- * @param {Object} props - Component props
- * @param {Project} props.project - Project data
- * @param {ProjectType} props.type - Project type
  */
 function ProjectCard({ project, type }: { project: Project; type: ProjectType }) {
   return (
@@ -119,34 +119,29 @@ function ProjectCard({ project, type }: { project: Project; type: ProjectType })
 }
 
 /**
- * Projects page component for displaying projects by type
- * @param {Object} props - Component props
- * @param {Object} props.params - Route parameters
- * @param {string} props.params.projectType - Type of projects to display
+ * Projects page component displaying projects filtered by type
+ * Implements proper type checking and validation for project types
  */
-export default function ProjectsPage({ params }: { params: { projectType: string } }) {
-  const type = params.projectType.toLowerCase() as ProjectType
-  const validTypes: ProjectType[] = ['upcoming', 'ongoing', 'completed']
-
-  // Validate project type
-  if (!validTypes.includes(type)) {
+export default function ProjectsPage({ params }: PageProps) {
+  // Validate the project type parameter
+  if (!VALID_PROJECT_TYPES.includes(params.projectType)) {
     notFound()
   }
 
-  const projectList = projects[type]
+  const projectList = projects[params.projectType]
 
   return (
     <div className="py-24 bg-sage-50 min-h-screen">
       <div className="container mx-auto px-4">
         <h1 className="text-5xl font-bold text-center mb-16 capitalize text-sage-800 font-playfair">
-          {type} Projects
+          {params.projectType} Projects
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projectList.map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
-              type={type}
+              type={params.projectType}
             />
           ))}
         </div>
