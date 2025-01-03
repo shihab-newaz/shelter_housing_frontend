@@ -1,151 +1,145 @@
-// app/projects/[projectType]/page.tsx
-import { notFound } from 'next/navigation'
-import Image from 'next/image'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { projects } from '@/constants'
-import { Metadata } from 'next'
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { projects } from "@/constants";
 
-/**
- * Type definitions for project-related data structures
- */
-type ProjectType = 'upcoming' | 'ongoing' | 'completed'
-
+// Define strongly typed interfaces
 interface Project {
-  id: number
-  title: string
-  description: string
-  image: string
-  location: string
-  units: number
-  progress?: number
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  location: string;
+  units: number;
+  progress: number;
 }
 
-interface PageProps {
-  params: {
-    projectType: ProjectType
-  }
-}
+type ProjectType = keyof typeof projects;
+type ProjectListing = Record<ProjectType, Project[]>;
 
-/**
- * Valid project types for validation
- */
-const VALID_PROJECT_TYPES: ProjectType[] = ['upcoming', 'ongoing', 'completed']
+const typedProjects = projects as ProjectListing;
 
-/**
- * Generate static paths for all project type pages
- */
-export function generateStaticParams() {
-  return VALID_PROJECT_TYPES.map(type => ({
-    projectType: type
-  }))
-}
-
-/**
- * Generate metadata for SEO optimization
- */
-export function generateMetadata({ params }: PageProps): Metadata {
-  const type = params.projectType.toLowerCase()
-
-  if (!VALID_PROJECT_TYPES.includes(type as ProjectType)) {
-    return {
-      title: 'Not Found',
-      description: 'The page you are looking for does not exist.',
-    }
-  }
-
-  const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1)
-  return {
-    title: `${capitalizedType} Projects | Shelter Housing`,
-    description: `Explore our ${type} real estate projects at Shelter Housing Ltd - Building sustainable communities and exceptional homes.`,
-  }
-}
-
-/**
- * Project card component for displaying individual project information
- */
-function ProjectCard({ project, type }: { project: Project; type: ProjectType }) {
-  return (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition duration-300 border-sage-200 group">
-      <CardHeader className="p-0">
-        <div className="relative">
-          <Image
-            src={project.image}
-            alt={project.title}
-            width={400}
-            height={300}
-            className="w-full object-cover h-[250px] group-hover:scale-105 transition-transform duration-300"
-          />
-          <Badge className="absolute top-4 right-4 bg-sage-600 hover:bg-sage-700">
-            {type}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        <CardTitle className="text-2xl mb-2 text-sage-800 group-hover:text-sage-600 transition-colors">
-          {project.title}
-        </CardTitle>
-        <CardDescription className="text-sage-600 mb-4">
-          {project.description}
-        </CardDescription>
-        <div className="flex justify-between items-center mb-4">
-          <span className="text-sm text-sage-500">
-            Location: {project.location}
-          </span>
-          <span className="text-sm text-sage-500">
-            Units: {project.units}
-          </span>
-        </div>
-        {type === 'ongoing' && project.progress !== undefined && (
-          <div className="w-full bg-sage-100 rounded-full h-2.5 mb-4">
-            <div
-              className="bg-sage-600 h-2.5 rounded-full transition-all duration-500"
-              style={{ width: `${project.progress}%` }}
-            />
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="bg-sage-50 p-6">
-        <Button
-          variant="outline"
-          className="w-full border-sage-500 text-sage-700 hover:bg-sage-600 hover:text-white transition-colors"
-        >
-          Learn More
-        </Button>
-      </CardFooter>
-    </Card>
-  )
-}
-
-/**
- * Projects page component displaying projects filtered by type
- * Implements proper type checking and validation for project types
- */
-export default function ProjectsPage({ params }: PageProps) {
-  // Validate the project type parameter
-  if (!VALID_PROJECT_TYPES.includes(params.projectType)) {
-    notFound()
-  }
-
-  const projectList = projects[params.projectType]
+const ProjectImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+  const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="py-24 bg-sage-50 min-h-screen">
-      <div className="container mx-auto px-4">
-        <h1 className="text-5xl font-bold text-center mb-16 capitalize text-sage-800 font-playfair">
-          {params.projectType} Projects
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projectList.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              type={params.projectType}
-            />
-          ))}
-        </div>
-      </div>
+    <div className="relative h-[400px] overflow-hidden bg-sage-50">
+      <Image
+        src={src}
+        alt={alt}
+        width={600}
+        height={400}
+        className={`
+          object-contain w-full h-full
+          transition-all duration-700 ease-in-out
+          ${isLoading ? "scale-105 blur-lg grayscale" : "scale-100 blur-0 grayscale-0"}
+        `}
+        onLoadingComplete={() => setIsLoading(false)}
+        priority={false}
+      />
     </div>
-  )
+  );
+};
+
+type ProjectCardProps = {
+  project: Project;
+  status: ProjectType;
+};
+
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, status }) => (
+  <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group bg-white">
+    <CardHeader className="p-0">
+      <div className="relative">
+        <ProjectImage src={project.image} alt={project.title} />
+        <Badge className="absolute top-4 right-4 bg-sage-600">
+          {status}
+        </Badge>
+      </div>
+    </CardHeader>
+    <CardContent className="p-6">
+      <CardTitle className="text-2xl mb-2 group-hover:text-sage-600 transition-colors">
+        {project.title}
+      </CardTitle>
+      <CardDescription className="text-sage-600 mb-4">
+        {project.description}
+      </CardDescription>
+      <div className="flex justify-between items-center mb-4">
+        <span className="text-sm text-sage-500">
+          Location: {project.location}
+        </span>
+        <span className="text-sm text-sage-500">
+          Units: {project.units}
+        </span>
+      </div>
+      {status === "ongoing" && (
+        <div className="w-full bg-sage-100 rounded-full h-2.5 mb-4">
+          <div
+            className="bg-sage-600 h-2.5 rounded-full transition-all duration-500"
+            style={{ width: `${project.progress}%` }}
+          />
+        </div>
+      )}
+    </CardContent>
+    <CardFooter className="bg-sage-50 p-6">
+      <Button
+        variant="outline"
+        className="w-full hover:bg-sage-600 hover:text-white transition-colors"
+      >
+        Learn More
+      </Button>
+    </CardFooter>
+  </Card>
+);
+
+export default function ProjectShowcase() {
+  return (
+    <section className="py-24 bg-white">
+      <div className="container mx-auto px-4">
+        <h2 className="text-4xl font-bold text-center mb-16">Our Projects</h2>
+        <Tabs defaultValue="completed" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-12">
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          </TabsList>
+          {(Object.entries(typedProjects) as [ProjectType, Project[]][]).map(([status, projectList]) => (
+            <TabsContent key={status} value={status}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                {projectList.map((project: Project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    status={status}
+                  />
+                ))}
+              </div>
+              <div className="mt-12 text-center">
+                <Link href={`/projects/${status}`}>
+                  <Button
+                    variant="outline"
+                    className="px-8 py-2 hover:bg-sage-600 hover:text-white transition-colors"
+                  >
+                    See More {status.charAt(0).toUpperCase() + status.slice(1)}{" "}
+                    Projects
+                  </Button>
+                </Link>
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+    </section>
+  );
 }
