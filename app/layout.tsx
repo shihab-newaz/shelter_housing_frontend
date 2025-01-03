@@ -1,42 +1,49 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Playfair_Display, Roboto } from "next/font/google";
+import Navbar from "@/components/persistent/Navbar";
+import Footer from '@/components/persistent/Footer'
+import Toolbar from '@/components/persistent/Toolbar'
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
+  display: "swap",
+  variable: "--font-playfair",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const roboto = Roboto({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "700"],
+  display: "swap",
+  variable: "--font-roboto",
 });
 
 export const metadata: Metadata = {
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
     other: [
       {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '32x32',
-        url: '/favicon-32x32.png',
+        rel: "icon",
+        type: "image/png",
+        sizes: "32x32",
+        url: "/favicon-32x32.png",
       },
       {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '16x16',
-        url: '/favicon-16x16.png',
+        rel: "icon",
+        type: "image/png",
+        sizes: "16x16",
+        url: "/favicon-16x16.png",
       },
     ],
   },
   title: {
     default: "Shelter Housing Ltd",
-    template: "%s | Shelter Housing Ltd"
+    template: "%s | Shelter Housing Ltd",
   },
-  description: "Shelter Housing Ltd is a leading real estate developer in Bangladesh, specializing in luxury apartments and modern living spaces in prime locations across Dhaka. Experience our tradition of trust and excellence in real estate development.",
+  description:
+    "Shelter Housing Ltd is a leading real estate developer in Bangladesh, specializing in luxury apartments and modern living spaces in prime locations across Dhaka. Experience our tradition of trust and excellence in real estate development.",
   keywords: [
     "real estate developer",
     "luxury apartments",
@@ -45,7 +52,7 @@ export const metadata: Metadata = {
     "Bangladesh property",
     "residential projects",
     "Shelter Housing",
-    "property developer"
+    "property developer",
   ],
   authors: [{ name: "Shelter Housing Ltd" }],
   creator: "Shelter Housing Ltd",
@@ -60,8 +67,10 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://shelterhousing.com",
     siteName: "Shelter Housing Ltd",
-    title: "Welcome to Shelter Housing Ltd - Leading Real Estate Developer in Bangladesh",
-    description: "Premier real estate development company specializing in luxury apartments and modern living spaces in prime locations across Dhaka, Bangladesh.",
+    title:
+      "Welcome to Shelter Housing Ltd - Leading Real Estate Developer in Bangladesh",
+    description:
+      "Premier real estate development company specializing in luxury apartments and modern living spaces in prime locations across Dhaka, Bangladesh.",
     images: [
       {
         url: "/og-image.jpg",
@@ -74,7 +83,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Shelter Housing Ltd - Premium Real Estate Developer",
-    description: "Experience luxury living with Bangladesh's leading real estate developer. Discover our premium residential projects in prime locations.",
+    description:
+      "Experience luxury living with Bangladesh's leading real estate developer. Discover our premium residential projects in prime locations.",
     images: ["/twitter-image.jpg"],
   },
   verification: {
@@ -90,12 +100,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html
+      lang="en"
+      className={`${playfairDisplay.variable} ${roboto.variable}`}
+    >
+      <body className="font-roboto antialiased">
+        <Navbar />
+        <Toolbar />
         {children}
+        <Footer />
       </body>
     </html>
   );
 }
+

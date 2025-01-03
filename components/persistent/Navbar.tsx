@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import * as React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -12,8 +12,8 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
-import { Menu } from 'lucide-react'
+} from "@/components/ui/navigation-menu";
+import { Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -21,46 +21,23 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
-import { projectItems } from "@/constants"
+} from "@/components/ui/sheet";
+import { projectItems } from "@/constants";
 
-/**
- * Enhanced Navbar component with dark theme and consistent white text
- * Features smooth transitions and hover effects
- * @returns React component
- */
 export default function Navbar() {
-  // Track scroll and hover states for background transition
-  const [isScrolled, setIsScrolled] = React.useState(false)
-  const [isHovered, setIsHovered] = React.useState(false)
-
   // Add scroll event listener with cleanup
-  React.useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-    
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
   // Compute dynamic classes for navbar background
   const navClasses = cn(
     "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out",
-    isScrolled || isHovered 
-      ? "bg-gray-900/55 backdrop-blur-sm shadow-lg" 
-      : "bg-transparent"
-  )
+    "bg-gray-900/55 backdrop-blur-sm shadow-lg"
+  );
 
   // Consistent white text styling for navigation links
-  const linkClasses = "text-white hover:text-gray-200/80 transition-colors duration-300"
+  const linkClasses =
+    "text-white hover:text-gray-200/80 transition-colors duration-300";
 
   return (
-    <header 
-      className={navClasses}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <header className={navClasses}>
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo and Brand Name */}
         <Link href="/" className="flex items-center space-x-2">
@@ -72,7 +49,7 @@ export default function Navbar() {
             className="rounded"
           />
           <span className="text-2xl font-bold text-white">
-            Shelter Housing
+            Shelter Housing Ltd.
           </span>
         </Link>
 
@@ -87,8 +64,8 @@ export default function Navbar() {
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
-              <NavigationMenuItem >
-                <NavigationMenuTrigger className="bg- text-white" >
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg- text-white">
                   Projects
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -130,9 +107,9 @@ export default function Navbar() {
         <div className="md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="text-white hover:text-white/80"
               >
                 <Menu className="h-6 w-6" />
@@ -146,21 +123,30 @@ export default function Navbar() {
                 </SheetDescription>
               </SheetHeader>
               <nav className="grid gap-4 py-4">
-                <Link href="/" className="px-2 py-1 text-white hover:text-white/80 transition-colors">
+                <Link
+                  href="/"
+                  className="px-2 py-1 text-white hover:text-white/80 transition-colors"
+                >
                   Home
                 </Link>
-                <Link href="/about" className="px-2 py-1 text-white hover:text-white/80 transition-colors">
+                <Link
+                  href="/about"
+                  className="px-2 py-1 text-white hover:text-white/80 transition-colors"
+                >
                   About
                 </Link>
-                <Link href="/contact" className="px-2 py-1 text-white hover:text-white/80 transition-colors">
+                <Link
+                  href="/contact"
+                  className="px-2 py-1 text-white hover:text-white/80 transition-colors"
+                >
                   Contact
                 </Link>
                 <div>
                   <h3 className="mb-2 font-semibold text-white">Projects</h3>
                   {projectItems.map((item) => (
-                    <Link 
-                      key={item.title} 
-                      href={item.href} 
+                    <Link
+                      key={item.title}
+                      href={item.href}
                       className="block px-2 py-1 text-white hover:text-white/80 transition-colors"
                     >
                       {item.title}
@@ -173,5 +159,5 @@ export default function Navbar() {
         </div>
       </div>
     </header>
-  )
+  );
 }

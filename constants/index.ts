@@ -62,23 +62,6 @@ export const projects = {
       }
     ]
   }
-export const carouselItems = [
-    {
-      image: "/ai.png",
-      title: "Building Dreams, Creating Homes",
-      subtitle: "Your trusted partner in premium real estate development"
-    },
-    {
-      image: "/ai2.png",
-      title: "Luxury Living Redefined",
-      subtitle: "Experience the epitome of modern architecture"
-    },
-    {
-      image: "/ai3.png",
-      title: "Sustainable Communities",
-      subtitle: "Creating eco-friendly spaces for future generations"
-    }
-  ]
 
  export const projectItems: { title: string; href: string }[] = [
     {
