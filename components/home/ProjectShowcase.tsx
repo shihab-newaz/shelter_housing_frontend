@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { projects, type Project } from "@/constants";
 
-type ProjectStatus = 'completed' | 'ongoing' | 'upcoming';
+type ProjectStatus = 'ongoing' | 'completed' | 'upcoming';
 
 interface ProjectImageProps {
   src: string;
@@ -110,8 +110,8 @@ export default function ProjectShowcase() {
         <h2 className="text-4xl font-bold text-center mb-16">Our Projects</h2>
         <Tabs defaultValue="completed" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-12">
-            <TabsTrigger value="completed">Completed</TabsTrigger>
             <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
           </TabsList>
           
