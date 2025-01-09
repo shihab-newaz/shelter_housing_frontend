@@ -19,8 +19,8 @@ const contactInfo: ContactInfo[] = [
     icon: MapPin,
     title: "Visit Us",
     details: [
-      "123 Building Street",
-      "Cityville, ST 12345",
+      "Level 7, Grameen Banglar Akshay Tower",
+      "51 Madani Ave, Dhaka 1212",
       "Bangladesh"
     ]
   },
@@ -28,25 +28,21 @@ const contactInfo: ContactInfo[] = [
     icon: Phone,
     title: "Call Us",
     details: [
-      "+880 1755-605080",
-      "+880 1234-567890"
+      "01755-605080"
     ]
   },
   {
     icon: Mail,
     title: "Email Us",
     details: [
-      "info@shelterhousing.com",
-      "support@shelterhousing.com"
+      "info@shelterhousing.com"
     ]
   },
   {
     icon: Clock,
     title: "Business Hours",
     details: [
-      "Monday - Friday: 9:00 AM - 6:00 PM",
-      "Saturday: 10:00 AM - 4:00 PM",
-      "Sunday: Closed"
+      "Sat-Thu: 9:30 AM - 6:00 PM",
     ]
   }
 ]
