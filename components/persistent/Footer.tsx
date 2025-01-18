@@ -45,16 +45,17 @@ export default function Footer() {
     },
     {
       icon: Clock,
-      text: "Opens 9:30 AM ",
-      subText: "Business Hours 9:30 AM - 6:00 PM",
+      text: "Opens 10:00 AM ",
+      subText: "Business Hours 10:00 AM - 5:00 PM",
     },
     {
       icon: Phone,
-      text: "01755-605080",
+      text: "Call Us",
+      subText: "01755605072, 01755605073, 01755605075, 01755605080"
     },
     {
       icon: Mail,
-      text: "info@shelterhousing.com",
+      text: "shelterhousinglimited@gmail.com",
     },
   ];
 

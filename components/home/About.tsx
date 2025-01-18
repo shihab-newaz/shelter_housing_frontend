@@ -23,13 +23,13 @@ const stats: Statistic[] = [
   },
   { 
     title: "Satisfied Clients",
-    value: "10,000+",
+    value: "10,00+",
     icon: Users,
     description: "Happy families in our communities"
   },
   { 
     title: "Projects Completed",
-    value: "500+",
+    value: "50+",
     icon: Home,
     description: "Successful developments nationwide"
   }

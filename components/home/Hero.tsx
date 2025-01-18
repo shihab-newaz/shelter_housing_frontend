@@ -3,7 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import YouTubeEmbed from "@/components/embed/YoutubeEmbed";
-import TypingAnimation from "@/components/ui/typing-animation";
+import { TextAnimate } from "@/components/ui/text-animate";
 
 export default function Hero() {
   return (
@@ -18,25 +18,25 @@ export default function Hero() {
       
       <div className="absolute inset-0 z-20 flex items-center justify-center ">
         <div className="text-center max-w-4xl mx-auto">
-          <TypingAnimation
+          <TextAnimate
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl
                       font-bold mb-4 text-white/90 leading-tight"
             duration={50}
             delay={500}
             startOnView={true}
           >
-            Building Dreams, Creating Homes
-          </TypingAnimation>
+            Shelter Housing Ltd.
+          </TextAnimate>
           
-          <TypingAnimation
+          <TextAnimate
             className="text-base sm:text-lg md:text-xl lg:text-2xl mb-8
                       text-white/80 max-w-3xl mx-auto"
             duration={30}
             delay={2000}
             startOnView={true}
           >
-            Your trusted partner in premium real estate development
-          </TypingAnimation>
+            A Tradition of Trust
+          </TextAnimate>
           
           <Link href="/projects/completed">
             <Button

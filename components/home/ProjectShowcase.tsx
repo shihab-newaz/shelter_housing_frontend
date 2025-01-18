@@ -1,7 +1,8 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -13,7 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { projects, type Project } from "@/constants";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Project } from "@/types/project";
+import { projectService } from "@/services/project.service";
 
 type ProjectStatus = 'ongoing' | 'completed' | 'upcoming';
 
@@ -30,8 +34,8 @@ const ProjectImage = ({ src, alt }: ProjectImageProps) => {
       <Image
         src={src}
         alt={alt}
-        width={600}
-        height={400}
+        width={2401}
+        height={3508}
         className={`
           object-contain w-full h-full
           transition-all duration-700 ease-in-out
@@ -64,7 +68,7 @@ const ProjectCard = ({ project, status }: { project: Project; status: ProjectSta
   <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group">
     <CardHeader className="p-0">
       <div className="relative overflow-hidden">
-        <ProjectImage src={project.image} alt={project.title} />
+        <ProjectImage src={project.imageUrl} alt={project.title} />
         <StatusBadge status={status} />
       </div>
     </CardHeader>
@@ -80,64 +84,105 @@ const ProjectCard = ({ project, status }: { project: Project; status: ProjectSta
           Location: {project.location}
         </span>
         <span className="text-sm text-gray-500">
-          Units: {project.units}
+          Starting Price: ৳{project.startingPrice.toLocaleString()}
         </span>
       </div>
-      {status === "ongoing" && (
-        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-            style={{ width: `${project.progress}%` }}
-          />
-        </div>
-      )}
+      <div className="flex justify-between items-center mb-4">
+        <span className="text-sm text-gray-500">
+          Land Area: {project.landArea} sqft
+        </span>
+        <span className="text-sm text-gray-500">
+          Floors: {project.totalFloors}
+        </span>
+      </div>
     </CardContent>
     <CardFooter className="bg-gray-50 p-6">
-      <Button
-        variant="outline"
-        className="w-full hover:bg-blue-600 hover:text-white transition-colors"
-      >
-        Learn More
-      </Button>
+      <Link href={`/projects/${status}/${project.id}`} className="w-full">
+        <Button
+          variant="outline"
+          className="w-full hover:bg-blue-600 hover:text-white transition-colors"
+        >
+          Learn More
+        </Button>
+      </Link>
     </CardFooter>
   </Card>
 );
 
 export default function ProjectShowcase() {
+  const [activeTab, setActiveTab] = useState<ProjectStatus>('ongoing');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setIsLoading(true);
+        const data = await projectService.getAll(activeTab);
+        // Only take the first two projects
+        setProjects(data.slice(0, 2));
+        setError("");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load projects");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [activeTab]);
+
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-4">
         <h2 className="text-4xl font-bold text-center mb-16">Our Projects</h2>
-        <Tabs defaultValue="completed" className="w-full">
+        <Tabs 
+          defaultValue="ongoing" 
+          className="w-full"
+          onValueChange={(value) => setActiveTab(value as ProjectStatus)}
+        >
           <TabsList className="grid w-full grid-cols-3 mb-12">
             <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
           </TabsList>
           
-          {(Object.entries(projects) as [ProjectStatus, Project[]][]).map(([status, projectList]) => (
-            <TabsContent key={status} value={status}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                {projectList.map((project) => (
-                  <ProjectCard 
-                    key={project.id}
-                    project={project}
-                    status={status}
-                  />
-                ))}
+          <div className="min-h-[400px]">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-96">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-              <div className="mt-12 text-center">
-                <Link href={`/projects/${status}`}>
-                  <Button
-                    variant="outline"
-                    className="px-8 py-2 hover:bg-blue-600 hover:text-white transition-colors"
-                  >
-                    See More {status.charAt(0).toUpperCase() + status.slice(1)} Projects
-                  </Button>
-                </Link>
-              </div>
-            </TabsContent>
-          ))}
+            ) : error ? (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : (
+              <TabsContent value={activeTab}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  {projects.map((project) => (
+                    <ProjectCard 
+                      key={project.id}
+                      project={project}
+                      status={activeTab}
+                    />
+                  ))}
+                </div>
+                {projects.length > 0 && (
+                  <div className="mt-12 text-center">
+                    <Link href={`/projects/${activeTab}`}>
+                      <Button
+                        variant="outline"
+                        className="px-8 py-2 hover:bg-blue-600 hover:text-white transition-colors"
+                      >
+                        See All {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Projects
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </TabsContent>
+            )}
+          </div>
         </Tabs>
       </div>
     </section>

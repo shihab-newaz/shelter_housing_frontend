@@ -1,22 +1,19 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Roboto } from "next/font/google";
+import { Lato ,Gothic_A1} from "next/font/google";
 import Navbar from "@/components/persistent/Navbar";
 import Footer from '@/components/persistent/Footer'
 import Toolbar from '@/components/persistent/Toolbar'
 import "./globals.css";
 
-const playfairDisplay = Playfair_Display({
+
+const gothic = Gothic_A1({
   subsets: ["latin"],
+  weight: ["300", "400", "700"], 
   display: "swap",
-  variable: "--font-playfair",
+  variable: "--font-lato",
 });
 
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-  display: "swap",
-  variable: "--font-roboto",
-});
+
 
 export const metadata: Metadata = {
   icons: {
@@ -102,9 +99,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${playfairDisplay.variable} ${roboto.variable}`}
+      className={`${gothic.variable} `}
     >
-      <body className="font-roboto antialiased">
+      <body className="font-sans antialiased">
         <Navbar />
         <Toolbar />
         {children}
