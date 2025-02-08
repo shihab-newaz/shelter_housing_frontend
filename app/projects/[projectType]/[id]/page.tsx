@@ -116,7 +116,7 @@ export default function ProjectDetailPage({
               </div>
               <div>
                 <h3 className="font-semibold text-gray-600">Starting Price</h3>
-                <p>${project.startingPrice.toLocaleString()}</p>
+                Call For Price{" "}
               </div>
               <div>
                 <h3 className="font-semibold text-gray-600">Land Area</h3>
