@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Project } from "@/types/project";
-import { projectService } from "@/services/project.service";
+import { getProjectById } from "@/app/actions/projectActions";
 
 export default function ProjectDetailPage({
   params,
@@ -39,9 +39,15 @@ export default function ProjectDetailPage({
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const data = await projectService.getById(parseInt(resolvedParams.id));
-        setProject(data);
-        setError("");
+        // Use the server action instead of the service
+        const result = await getProjectById(parseInt(resolvedParams.id));
+        
+        if (result.error) {
+          setError(result.error);
+        } else if (result.project) {
+          setProject(result.project);
+          setError("");
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load project");
       } finally {
@@ -116,7 +122,7 @@ export default function ProjectDetailPage({
               </div>
               <div>
                 <h3 className="font-semibold text-gray-600">Starting Price</h3>
-                Call For Price{" "}
+                <p>{project.startingPrice ? `$${project.startingPrice}` : "Call For Price"}</p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-600">Land Area</h3>

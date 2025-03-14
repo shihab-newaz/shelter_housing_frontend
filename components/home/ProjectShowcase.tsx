@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Project } from "@/types/project";
-import { projectService } from "@/services/project.service";
+import { getProjects } from "@/app/actions/projectActions";
 
 type ProjectStatus = "ongoing" | "completed" | "upcoming";
 
@@ -124,10 +124,17 @@ export default function ProjectShowcase() {
     const fetchProjects = async () => {
       try {
         setIsLoading(true);
-        const data = await projectService.getAll(activeTab);
-        // Only take the first two projects
-        setProjects(data.slice(0, 2));
-        setError("");
+        
+        // Use the server action instead of the service
+        const result = await getProjects(activeTab);
+        
+        if (result.error) {
+          setError(result.error);
+        } else if (result.projects) {
+          // Only take the first two projects for the showcase
+          setProjects(result.projects.slice(0, 2));
+          setError("");
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load projects"

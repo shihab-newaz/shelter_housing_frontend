@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Project {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  imageUrl     String
+  location     String
+  totalFloors  String
+  landArea     String
+  status       String   @default("upcoming")
+  startingPrice String     @default("0")
+  parking      Boolean  @default(false)
+  elevator     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  flatTypes    FlatType[]
+}
+
+model FlatType {
+  id        Int     @id @default(autoincrement())
+  type      String
+  size      Int
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

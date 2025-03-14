@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Project } from "@/types/project";
-import { projectService } from "@/services/project.service";
+import { getProjects } from "@/app/actions/projectActions";
 
 export default function ProjectTypePage({ 
   params 
@@ -25,11 +25,17 @@ export default function ProjectTypePage({
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await projectService.getAll(
+        // Use the server action instead of the service
+        const result = await getProjects(
           resolvedParams.projectType as 'completed' | 'ongoing' | 'upcoming'
         );
-        setProjects(data);
-        setError("");
+        
+        if (result.error) {
+          setError(result.error);
+        } else if (result.projects) {
+          setProjects(result.projects);
+          setError("");
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load projects");
       } finally {
@@ -93,7 +99,7 @@ export default function ProjectTypePage({
                 </div>
                 <div className="flex justify-between">
                   <span>Starting Price:</span>
-                  <span>${project.startingPrice.toLocaleString()}</span>
+                  <span>{project.startingPrice}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Land Area:</span>

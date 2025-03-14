@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "@/components/ui/use-toast"
 
 /**
  * Form data interface
@@ -31,7 +31,6 @@ const initialFormState: FormData = {
 export default function Contact() {
   const [formData, setFormData] = useState<FormData>(initialFormState)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
 
   /**
    * Handles form input changes
@@ -62,10 +61,9 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateForm()) {
-      toast({
+      toast.destructive({
         title: "Validation Error",
-        description: "Please check all fields are filled correctly.",
-        variant: "destructive"
+        description: "Please check all fields are filled correctly."
       })
       return
     }
@@ -76,18 +74,16 @@ export default function Contact() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       console.log('Form submitted:', formData)
       
-      toast({
+      toast.default({
         title: "Message Sent",
-        description: "We'll get back to you soon!",
-        variant: "default"
+        description: "We'll get back to you soon!"
       })
       
       setFormData(initialFormState)
     } catch (error) {
-      toast({
+      toast.destructive({
         title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive"
+        description: "Failed to send message. Please try again."
       })
     } finally {
       setIsSubmitting(false)

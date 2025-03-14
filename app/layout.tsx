@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import { Lato ,Gothic_A1} from "next/font/google";
+import { Lato, Gothic_A1 } from "next/font/google";
 import Navbar from "@/components/persistent/Navbar";
-import Footer from '@/components/persistent/Footer'
-import Toolbar from '@/components/persistent/Toolbar'
+import Footer from "@/components/persistent/Footer";
+import Toolbar from "@/components/persistent/Toolbar";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/components/auth/provider";
 import "./globals.css";
-
 
 const gothic = Gothic_A1({
   subsets: ["latin"],
-  weight: ["300", "400", "700"], 
+  weight: ["300", "400", "700"],
   display: "swap",
   variable: "--font-lato",
 });
-
-
 
 export const metadata: Metadata = {
   icons: {
@@ -97,17 +96,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${gothic.variable} `}
-    >
+    <html lang="en" className={`${gothic.variable} `}>
+      <head>
+        <script
+          crossOrigin="anonymous"
+          src="//unpkg.com/react-scan/dist/auto.global.js"
+        />
+      </head>
       <body className="font-sans antialiased">
-        <Navbar />
-        <Toolbar />
-        {children}
-        <Footer />
+        <AuthProvider>
+          <Navbar />
+          <Toolbar />
+          {children}
+          <Toaster />
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
 }
-
