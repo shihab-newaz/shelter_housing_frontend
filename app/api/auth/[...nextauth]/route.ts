@@ -1,70 +1,18 @@
-import NextAuth from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import { prisma } from "@/lib/prisma"
-import bcrypt from "bcrypt"
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth";
+import { authOptions } from "./options";
 
-export const authOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
+// This is the main authentication route.
+// It is responsible for handling the authentication flow.
+// The authentication flow is handled by the NextAuth library.
+// The authOptions are the configuration options for the authentication flow.
+// The authOptions are imported from the options file.
+// The handler function is the main function that is called when the user requests the authentication route.
+// The handler function takes the authOptions as an argument.
+// The handler function returns a response to the user.
+const handler = NextAuth(authOptions);
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
-
-        if (!user || !user.isActive) {
-          return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: String(user.id),
-          email: user.email,
-        }
-      }
-    })
-  ],
-  callbacks: {
-    async jwt({ token, user }: { token: any, user?: any }) {
-      if (user) {
-        token.id = user.id
-      }
-      return token
-    },
-    async session({ session, token }: { session: any, token: any }) {
-      if (session.user && token) {
-        session.user.id = token.id as string
-      }
-      return session
-    }
-  },
-  pages: {
-    signIn: "/login",
-    error: "/login"
-  },
-  session: {
-    strategy: 'jwt' as 'jwt',
-    maxAge: 60 * 60 * 24, // 1 day
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-}
-
-const handler = NextAuth(authOptions)
-
-export { handler as GET, handler as POST }
+// This is the GET request handler.
+// It is responsible for handling GET requests to the authentication route.
+// The GET request handler is the same as the POST request handler.
+export { handler as GET, handler as POST };
