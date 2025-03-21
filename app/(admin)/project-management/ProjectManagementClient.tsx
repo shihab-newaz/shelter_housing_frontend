@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
@@ -13,6 +13,7 @@ import {
   updateProject,
   deleteProject,
 } from "@/app/actions/projectActions";
+import { getProjectWithFreshImageUrls } from "@/app/actions/imageUrlActions";
 import { toast } from "@/components/ui/use-toast";
 
 interface ProjectManagementClientProps {
@@ -39,7 +40,13 @@ export default function ProjectManagementClient({
           title: "Error",
           description: result.error,
         });
+        setError(result.error);
       } else if (result.project) {
+        // Get fresh image URL for the newly created project
+        const projectWithFreshUrl = await getProjectWithFreshImageUrls(
+          result.project
+        );
+
         toast.default({
           title: "Success",
           description: "Project created successfully",
@@ -47,8 +54,8 @@ export default function ProjectManagementClient({
 
         setProjects([
           {
-            ...result.project,
-            status: result.project.status as
+            ...projectWithFreshUrl,
+            status: projectWithFreshUrl.status as
               | "completed"
               | "ongoing"
               | "upcoming",
@@ -56,12 +63,16 @@ export default function ProjectManagementClient({
           ...projects,
         ]);
         setShowForm(false);
+        setError("");
       }
     } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unexpected error occurred";
       toast.destructive({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: errorMessage,
       });
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
       // Refresh the page data
@@ -81,26 +92,38 @@ export default function ProjectManagementClient({
           title: "Error",
           description: result.error,
         });
+        setError(result.error);
       } else if (result.project) {
+        // Get fresh image URL for the updated project
+        const projectWithFreshUrl = await getProjectWithFreshImageUrls(
+          result.project
+        );
+
         toast.default({
           title: "Success",
           description: "Project updated successfully",
         });
 
         // Update projects list with updated project
-setProjects(
-  projects.map((p) =>
-    p.id === result.project?.id ? (result.project as Project) : p
-  )
-);
+        setProjects(
+          projects.map((p) =>
+            p.id === projectWithFreshUrl.id
+              ? (projectWithFreshUrl as Project)
+              : p
+          )
+        );
 
         setEditingProject(null);
+        setError("");
       }
     } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unexpected error occurred";
       toast.destructive({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: errorMessage,
       });
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
       // Refresh the page data
@@ -121,6 +144,7 @@ setProjects(
           title: "Error",
           description: result.error,
         });
+        setError(result.error);
       } else {
         toast.default({
           title: "Success",
@@ -134,24 +158,43 @@ setProjects(
         if (editingProject?.id === id) {
           setEditingProject(null);
         }
+
+        setError("");
       }
     } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unexpected error occurred";
       toast.destructive({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: errorMessage,
       });
+      setError(errorMessage);
     } finally {
       // Refresh the page data
       router.refresh();
     }
   };
 
-  const handleEdit = (project: Project) => {
-    setEditingProject(project);
-    setShowForm(false); // Close add form if open
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const handleEdit = useCallback(async (project: Project) => {
+    try {
+      // Get fresh image URL before editing
+      const projectWithFreshUrl = await getProjectWithFreshImageUrls(project);
+      setEditingProject(projectWithFreshUrl);
+      setShowForm(false); // Close add form if open
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load project image";
+      toast.destructive({
+        title: "Warning",
+        description: errorMessage,
+      });
+      // Still set the editing project even if image refresh fails
+      setEditingProject(project);
+    }
+  }, []);
 
   const handleCancel = () => {
     setEditingProject(null);

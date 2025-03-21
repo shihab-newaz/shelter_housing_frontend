@@ -1,98 +1,109 @@
 'use server'
 
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
+import { auth, requireAuth } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
-import { Project } from '@/types/project';
 
-// Types for responses
-type ProjectResponse = {
-  project?: Project;
-  error?: string;
-  errors?: FormErrors;
-  success?: boolean;
-};
-
-// Error type for form validation
-type FormErrors = {
-  [key: string]: string[];
-};
-
-// Function to save file to public directory
-async function saveFileToPublic(file: File): Promise<string> {
+/**
+ * Upload a file to Supabase Storage
+ * @param file The file to upload
+ * @returns The storage path (not the full URL)
+ */
+async function uploadFileToStorage(file: File): Promise<string> {
   try {
-    console.log("Starting file save process...");
-    
-    // Generate unique filename
-    const fileExtension = file.name.split('.').pop();
-    const randomBytes = crypto.randomBytes(16).toString('hex');
-    const fileName = `${randomBytes}.${fileExtension}`;
-    
-    // Create directory path
-    const directoryPath = join(process.cwd(), 'public', 'uploads', 'projects');
-    
-    // Ensure directory exists
-    try {
-      await mkdir(directoryPath, { recursive: true });
-      console.log(`Directory ensured: ${directoryPath}`);
-    } catch (err) {
-      console.error('Error creating directory:', err);
-    }
-    
-    const filePath = join(directoryPath, fileName);
-    
-    // Get file buffer
+    // Generate a unique file path
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const fileName = `${crypto.randomBytes(16).toString('hex')}.${fileExtension}`;
+    const filePath = `projects/${fileName}`;
+
+    // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    console.log(`File size: ${buffer.length} bytes`);
-    console.log(`Saving to: ${filePath}`);
-    
-    // Save file to public/uploads/projects directory
-    await writeFile(filePath, buffer);
-    console.log("File saved successfully!");
-    
-    // Return public URL path
-    return `/uploads/projects/${fileName}`;
-  } catch (error) {
-    console.error('Error saving file:', error);
-    throw new Error(`Failed to save file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-}
+    const fileData = Buffer.from(arrayBuffer);
 
-// Debug helper to log form data
-function logFormData(formData: FormData) {
-  console.log("Form data contents:");
-  for (const [key, value] of formData.entries()) {
-    if (key === 'imageFile') {
-      const file = value as File;
-      console.log(`${key}: File name: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
-    } else {
-      console.log(`${key}: ${value}`);
+    // Upload to Supabase
+    const { data, error } = await supabase.storage
+      .from('project-images')
+      .upload(filePath, fileData, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (error) {
+      console.error('Storage upload error:', error);
+      throw new Error(`Upload failed: ${error.message}`);
     }
+
+    console.log(`File uploaded successfully to path: ${filePath}`);
+    
+    // Return just the storage path, not the full URL
+    return filePath;
+  } catch (error) {
+    console.error('File upload error:', error);
+    throw error;
   }
 }
 
-// Create a new project with file upload support
-export async function createProject(formData: FormData): Promise<ProjectResponse> {
-  console.log("Create project action called");
-  
-  // Check authentication
-  const session = await auth();
-  if (!session) {
-    console.log("Authentication failed");
-    return { error: 'Unauthorized' };
+// Get all projects, optionally filtered by status
+export async function getProjects(status?: 'completed' | 'ongoing' | 'upcoming') {
+  try {
+    const projects = await prisma.project.findMany({
+      where: status ? { status } : undefined,
+      include: {
+        flatTypes: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+    return { projects }
+  } catch (error) {
+    console.error('Failed to fetch projects:', error)
+    return { error: 'Failed to fetch projects' }
   }
+}
+
+// Get a project by ID
+export async function getProjectById(id: number) {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        flatTypes: true
+      }
+    })
+    
+    if (!project) {
+      return { error: 'Project not found' }
+    }
+    
+    return { project }
+  } catch (error) {
+    console.error('Failed to fetch project:', error)
+    return { error: 'Failed to fetch project' }
+  }
+}
+
+// Create a new project
+export async function createProject(formData: FormData) {
+  // Require authentication
+  await requireAuth()
   
   try {
-    // Log form data for debugging
-    logFormData(formData);
+    // Process the image file first
+    const imageFile = formData.get('imageFile') as File;
+    if (!imageFile || imageFile.size === 0) {
+      return { error: 'Project image is required' };
+    }
     
-    // Extract and validate basic fields
+    // Upload to Supabase and get the storage path
+    const imageStoragePath = await uploadFileToStorage(imageFile);
+
+    // Extract other form data
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const location = formData.get('location') as string;
@@ -103,72 +114,38 @@ export async function createProject(formData: FormData): Promise<ProjectResponse
     const parking = formData.get('parking') === 'on';
     const elevator = formData.get('elevator') === 'on';
     
-    console.log("Basic field extraction complete");
-    
-    // Validate required fields
-    const errors: FormErrors = {};
-    if (!title) errors.title = ['Title is required'];
-    if (!description) errors.description = ['Description is required'];
-    if (!location) errors.location = ['Location is required'];
-    if (!totalFloors) errors.totalFloors = ['Total floors is required'];
-    if (!landArea) errors.landArea = ['Land area is required'];
-    
-    // Handle file upload
-    let imageUrl = '';
-    const imageFile = formData.get('imageFile') as File;
-    
-    if (imageFile && imageFile.size > 0) {
-      console.log(`Processing image file: ${imageFile.name} (${imageFile.size} bytes)`);
-      try {
-        imageUrl = await saveFileToPublic(imageFile);
-        console.log(`Image saved, URL: ${imageUrl}`);
-      } catch (fileError) {
-        console.error("File processing error:", fileError);
-        errors.imageFile = [fileError instanceof Error ? fileError.message : 'Failed to save image'];
-      }
-    } else {
-      console.log("No image file provided or file is empty");
-      errors.imageFile = ['Project image is required'];
+    // Basic validation
+    if (!title || !description || !location || !totalFloors || !landArea) {
+      return { error: 'All required fields must be provided' };
     }
     
-    // Extract flat types from form data
-    const flatTypesData: { type: string; size: number }[] = [];
+    // Process flat types
+    const flatTypes: Array<{ type: string; size: number }> = [];
     let index = 0;
     
-    console.log("Extracting flat types");
     while (formData.has(`flatTypes[${index}].type`)) {
       const type = formData.get(`flatTypes[${index}].type`) as string;
       const sizeStr = formData.get(`flatTypes[${index}].size`) as string;
       const size = parseInt(sizeStr);
       
-      console.log(`Flat type ${index}: ${type}, size: ${sizeStr} (${size})`);
-      
       if (type && !isNaN(size)) {
-        flatTypesData.push({ type, size });
+        flatTypes.push({ type, size });
       }
       
       index++;
     }
     
-    if (flatTypesData.length === 0) {
-      console.log("No valid flat types found");
-      errors.flatTypes = ['At least one flat type is required'];
+    if (flatTypes.length === 0) {
+      return { error: 'At least one flat type is required' };
     }
     
-    // If there are validation errors, return them
-    if (Object.keys(errors).length > 0) {
-      console.log("Validation errors:", errors);
-      return { error: 'Validation failed', errors };
-    }
-    
-    console.log("Creating project in database");
-    
-    // Create the project in the database
+    // Create the project
     const project = await prisma.project.create({
       data: {
         title,
         description,
-        imageUrl,
+        // Store just the storage path, not the full URL
+        imageUrl: imageStoragePath,
         location,
         totalFloors,
         landArea,
@@ -177,7 +154,7 @@ export async function createProject(formData: FormData): Promise<ProjectResponse
         parking,
         elevator,
         flatTypes: {
-          create: flatTypesData
+          create: flatTypes
         }
       },
       include: {
@@ -185,35 +162,24 @@ export async function createProject(formData: FormData): Promise<ProjectResponse
       }
     });
     
-    console.log(`Project created successfully with ID: ${project.id}`);
-    
-    // Revalidate paths to update the UI
     revalidatePath('/project-management');
     revalidatePath(`/projects/${status}`);
     
-    return { project: project as unknown as Project };
+    return { project };
   } catch (error) {
-    console.error('Error creating project:', error);
+    console.error('Failed to create project:', error);
     return { 
-      error: `Failed to create project: ${error instanceof Error ? error.message : 'Unknown error'}`
+      error: error instanceof Error ? error.message : 'Failed to create project' 
     };
   }
 }
 
 // Update an existing project
-export async function updateProject(id: number, formData: FormData): Promise<ProjectResponse> {
-  console.log(`Update project action called for ID: ${id}`);
-  
-  // Check authentication
-  const session = await auth();
-  if (!session) {
-    return { error: 'Unauthorized' };
-  }
+export async function updateProject(id: number, formData: FormData) {
+  // Require authentication
+  await requireAuth()
   
   try {
-    // Log form data for debugging
-    logFormData(formData);
-    
     // First check if project exists
     const existingProject = await prisma.project.findUnique({
       where: { id },
@@ -224,7 +190,22 @@ export async function updateProject(id: number, formData: FormData): Promise<Pro
       return { error: 'Project not found' };
     }
     
-    // Extract and validate basic fields
+    let imageUrl = existingProject.imageUrl;
+    
+    // Process image if a new one is provided
+    const imageFile = formData.get('imageFile') as File;
+    if (imageFile && imageFile.size > 0) {
+      // Upload new image
+      imageUrl = await uploadFileToStorage(imageFile);
+    } else {
+      // Keep existing image path
+      const existingImageUrl = formData.get('imageUrl') as string;
+      if (existingImageUrl) {
+        imageUrl = existingImageUrl;
+      }
+    }
+    
+    // Extract other form data
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const location = formData.get('location') as string;
@@ -235,39 +216,13 @@ export async function updateProject(id: number, formData: FormData): Promise<Pro
     const parking = formData.get('parking') === 'on';
     const elevator = formData.get('elevator') === 'on';
     
-    // Validate required fields
-    const errors: FormErrors = {};
-    if (!title) errors.title = ['Title is required'];
-    if (!description) errors.description = ['Description is required'];
-    if (!location) errors.location = ['Location is required'];
-    if (!totalFloors) errors.totalFloors = ['Total floors is required'];
-    if (!landArea) errors.landArea = ['Land area is required'];
-    
-    // Handle file upload
-    let imageUrl = existingProject.imageUrl;
-    const imageFile = formData.get('imageFile') as File;
-    
-    if (imageFile && imageFile.size > 0) {
-      console.log(`Processing updated image file: ${imageFile.name} (${imageFile.size} bytes)`);
-      try {
-        // Upload new image to public directory
-        imageUrl = await saveFileToPublic(imageFile);
-        console.log(`New image saved, URL: ${imageUrl}`);
-      } catch (fileError) {
-        console.error("File processing error:", fileError);
-        errors.imageFile = [fileError instanceof Error ? fileError.message : 'Failed to save image'];
-      }
-    } else {
-      // Keep existing image URL from hidden input
-      const existingImageUrl = formData.get('imageUrl') as string;
-      if (existingImageUrl) {
-        imageUrl = existingImageUrl;
-        console.log(`Using existing image URL: ${imageUrl}`);
-      }
+    // Basic validation
+    if (!title || !description || !location || !totalFloors || !landArea) {
+      return { error: 'All required fields must be provided' };
     }
     
-    // Extract flat types from form data
-    const flatTypesData: { type: string; size: number }[] = [];
+    // Process flat types
+    const flatTypes: Array<{ type: string; size: number }> = [];
     let index = 0;
     
     while (formData.has(`flatTypes[${index}].type`)) {
@@ -275,29 +230,19 @@ export async function updateProject(id: number, formData: FormData): Promise<Pro
       const sizeStr = formData.get(`flatTypes[${index}].size`) as string;
       const size = parseInt(sizeStr);
       
-      console.log(`Flat type ${index}: ${type}, size: ${sizeStr} (${size})`);
-      
       if (type && !isNaN(size)) {
-        flatTypesData.push({ type, size });
+        flatTypes.push({ type, size });
       }
       
       index++;
     }
     
-    if (flatTypesData.length === 0) {
-      errors.flatTypes = ['At least one flat type is required'];
+    if (flatTypes.length === 0) {
+      return { error: 'At least one flat type is required' };
     }
     
-    // If there are validation errors, return them
-    if (Object.keys(errors).length > 0) {
-      console.log("Validation errors:", errors);
-      return { error: 'Validation failed', errors };
-    }
-    
-    console.log("Updating project in database");
-    
-    // Update the project in the database using a transaction
-    const project = await prisma.$transaction(async (tx) => {
+    // Update the project with transaction to handle related records
+    const updatedProject = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Delete existing flat types
       await tx.flatType.deleteMany({
         where: { projectId: id }
@@ -309,7 +254,7 @@ export async function updateProject(id: number, formData: FormData): Promise<Pro
         data: {
           title,
           description,
-          imageUrl,
+          imageUrl, // Store the path, not the full URL
           location,
           totalFloors,
           landArea,
@@ -318,7 +263,7 @@ export async function updateProject(id: number, formData: FormData): Promise<Pro
           parking,
           elevator,
           flatTypes: {
-            create: flatTypesData
+            create: flatTypes
           }
         },
         include: {
@@ -327,45 +272,56 @@ export async function updateProject(id: number, formData: FormData): Promise<Pro
       });
     });
     
-    console.log(`Project updated successfully: ${project.id}`);
-    
-    // Revalidate paths to update the UI
     revalidatePath('/project-management');
     revalidatePath(`/projects/${status}`);
     
-    return { project: project as unknown as Project };
+    return { project: updatedProject };
   } catch (error) {
-    console.error('Error updating project:', error);
+    console.error('Failed to update project:', error);
     return { 
-      error: `Failed to update project: ${error instanceof Error ? error.message : 'Unknown error'}`
+      error: error instanceof Error ? error.message : 'Failed to update project' 
     };
   }
 }
 
-// Other functions remain the same...
-export async function deleteProject(id: number): Promise<ProjectResponse> {
-  // Check authentication
-  const session = await auth();
-  if (!session) {
-    return { error: 'Unauthorized' };
-  }
+// Delete a project
+export async function deleteProject(id: number) {
+  // Require authentication
+  await requireAuth()
   
   try {
     // Check if project exists
     const project = await prisma.project.findUnique({
-      where: { id }
+      where: { id },
+      select: { imageUrl: true }
     });
     
     if (!project) {
       return { error: 'Project not found' };
     }
     
-    // Delete the project (cascade delete will remove flat types)
+    // Delete the project from database (cascade will handle flat types)
     await prisma.project.delete({
       where: { id }
     });
     
-    // Revalidate paths to update the UI
+    // Try to delete the image from storage if it exists
+    if (project.imageUrl && !project.imageUrl.startsWith('http')) {
+      try {
+        const { error } = await supabase.storage
+          .from('project-images')
+          .remove([project.imageUrl]);
+          
+        if (error) {
+          console.warn('Failed to delete image from storage:', error);
+          // Continue even if image deletion fails
+        }
+      } catch (storageError) {
+        console.warn('Error during storage deletion:', storageError);
+        // Continue even if image deletion fails
+      }
+    }
+    
     revalidatePath('/project-management');
     revalidatePath('/projects/upcoming');
     revalidatePath('/projects/ongoing');
@@ -373,46 +329,7 @@ export async function deleteProject(id: number): Promise<ProjectResponse> {
     
     return { success: true };
   } catch (error) {
-    console.error('Error deleting project:', error);
+    console.error('Failed to delete project:', error);
     return { error: 'Failed to delete project' };
-  }
-}
-
-export async function getProjects(status?: 'completed' | 'ongoing' | 'upcoming'): Promise<{ projects?: Project[]; error?: string }> {
-  try {
-    const projects = await prisma.project.findMany({
-      where: status ? { status } : undefined,
-      include: {
-        flatTypes: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-    
-    return { projects: projects as unknown as Project[] };
-  } catch (error) {
-    console.error('Failed to fetch projects:', error);
-    return { error: 'Failed to fetch projects' };
-  }
-}
-
-export async function getProjectById(id: number): Promise<{ project?: Project; error?: string }> {
-  try {
-    const project = await prisma.project.findUnique({
-      where: { id },
-      include: {
-        flatTypes: true
-      }
-    });
-    
-    if (!project) {
-      return { error: 'Project not found' };
-    }
-    
-    return { project: project as unknown as Project };
-  } catch (error) {
-    console.error('Failed to fetch project:', error);
-    return { error: 'Failed to fetch project' };
   }
 }

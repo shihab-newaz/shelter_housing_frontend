@@ -24,12 +24,12 @@ export default function Toolbar() {
     isHovered: false,
     hoveredItem: null
   })
-  const [phoneHref, setPhoneHref] = useState('tel:+01755605080')
+  const [phoneHref, setPhoneHref] = useState('tel:+01614542234')
 
   // Detect device type and set appropriate phone protocol
   useEffect(() => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-    setPhoneHref(isMobile ? 'tel:+01755605080' : 'callto:+01755605080')
+    setPhoneHref(isMobile ? 'tel:+01614542234' : 'callto:+01614542234')
   }, [])
 
   /**
@@ -42,7 +42,7 @@ export default function Toolbar() {
       window.location.href = phoneHref
       // Fallback to tel: protocol if callto: fails
       setTimeout(() => {
-        window.location.href = 'tel:+01755605080'
+        window.location.href = 'tel:+01614542234'
       }, 100)
     }
   }

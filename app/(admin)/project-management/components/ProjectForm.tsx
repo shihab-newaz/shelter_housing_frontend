@@ -1,3 +1,4 @@
+// app/(admin)/project-management/components/ProjectForm.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -218,12 +219,12 @@ export function ProjectFormWithUpload({
             </div>
 
             <div className="space-y-2">
-              <div className="text-sm font-medium">Land Area (sqft)</div>
+              <div className="text-sm font-medium">Land Area (Katha)</div>
               <Input
                 id="landArea"
                 name="landArea"
                 defaultValue={project?.landArea}
-                placeholder="Land area in square feet"
+                placeholder="Land area in Katha"
               />
               {errors.landArea && (
                 <p className="text-sm text-red-500">{errors.landArea}</p>

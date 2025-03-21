@@ -1,8 +1,10 @@
+// app/(admin)/project-management/page.tsx
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ProjectManagementClient from './ProjectManagementClient';
 import { Project } from '@/types/project';
+import { getProjectsWithFreshImageUrls } from '@/app/actions/imageUrlActions';
 
 // This is a server component
 export default async function ProjectManagementPage() {
@@ -47,7 +49,10 @@ export default async function ProjectManagementPage() {
     }))
   }));
   
+  // Get fresh signed image URLs for all projects
+  const projectsWithFreshUrls = await getProjectsWithFreshImageUrls(projects);
+  
   return (
-    <ProjectManagementClient initialProjects={projects} />
+    <ProjectManagementClient initialProjects={projectsWithFreshUrls} />
   );
 }

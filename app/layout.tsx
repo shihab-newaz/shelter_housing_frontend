@@ -35,8 +35,8 @@ export const metadata: Metadata = {
     ],
   },
   title: {
-    default: "Shelter Housing Ltd",
-    template: "%s | Shelter Housing Ltd",
+    default: "Shelter Housing Limited",
+    template: "%s | Shelter Housing Limited",
   },
   description:
     "Shelter Housing Ltd is a leading real estate developer in Bangladesh, specializing in luxury apartments and modern living spaces in prime locations across Dhaka. Experience our tradition of trust and excellence in real estate development.",
@@ -50,9 +50,9 @@ export const metadata: Metadata = {
     "Shelter Housing",
     "property developer",
   ],
-  authors: [{ name: "Shelter Housing Ltd" }],
-  creator: "Shelter Housing Ltd",
-  publisher: "Shelter Housing Ltd",
+  authors: [{ name: "Shelter Housing Limited" }],
+  creator: "Shelter Housing Limited",
+  publisher: "Shelter Housing Limited",
   formatDetection: {
     email: false,
     address: true,
@@ -62,9 +62,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://shelterhousing.com",
-    siteName: "Shelter Housing Ltd",
+    siteName: "Shelter Housing Limited",
     title:
-      "Welcome to Shelter Housing Ltd - Leading Real Estate Developer in Bangladesh",
+      "Welcome to Shelter Housing Limited - Leading Real Estate Developer in Bangladesh",
     description:
       "Premier real estate development company specializing in luxury apartments and modern living spaces in prime locations across Dhaka, Bangladesh.",
     images: [
@@ -72,13 +72,13 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Shelter Housing Ltd - Premium Real Estate Development",
+        alt: "Shelter Housing Limited - Premium Real Estate Development",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Shelter Housing Ltd - Premium Real Estate Developer",
+    title: "Shelter Housing Limited - Premium Real Estate Developer",
     description:
       "Experience luxury living with Bangladesh's leading real estate developer. Discover our premium residential projects in prime locations.",
     images: ["/twitter-image.jpg"],
@@ -98,10 +98,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${gothic.variable} `}>
       <head>
-        <script
+        {/* <script
           crossOrigin="anonymous"
           src="//unpkg.com/react-scan/dist/auto.global.js"
-        />
+        /> */}
       </head>
       <body className="font-sans antialiased">
         <AuthProvider>
