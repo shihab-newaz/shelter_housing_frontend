@@ -19,12 +19,13 @@ import { Project } from "@/types/project";
 import { getProjects } from "@/app/actions/projectActions";
 import { getProjectsWithFreshImageUrls } from "@/app/actions/imageUrlActions";
 import { ProjectImage } from "@/components/common/ProjectImage";
-
+import { use } from "react";
 type ProjectStatus = "ongoing" | "completed" | "upcoming";
 
 interface ProjectShowcaseClientProps {
   initialProjects: Project[];
   initialTab: ProjectStatus;
+  params?: Promise<any>;
 }
 
 const StatusBadge = ({ status }: { status: ProjectStatus }) => {
@@ -99,10 +100,12 @@ const ProjectCard = ({
   </Card>
 );
 
-export default function ProjectShowcaseClient({ 
+export default function ProjectShowcaseClient({
   initialProjects,
-  initialTab
+  initialTab,
+  params,
 }: ProjectShowcaseClientProps) {
+  // const resolvedParams = params ? use(params) : null;
   const [activeTab, setActiveTab] = useState<ProjectStatus>(initialTab);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [isLoading, setIsLoading] = useState(initialProjects.length === 0);
@@ -114,25 +117,27 @@ export default function ProjectShowcaseClient({
       const fetchProjects = async () => {
         try {
           setIsLoading(true);
-          
+
           // Use the server action to fetch projects
           const result = await getProjects(activeTab);
-          
+
           if (result.error) {
             setError(result.error);
           } else if (result.projects) {
             // Only take the first two projects for the showcase
             const projectsSlice = result.projects.slice(0, 2);
-            
+
             // Explicitly cast status to the correct type to satisfy TypeScript
-            const typedProjects = projectsSlice.map(project => ({
+            const typedProjects = projectsSlice.map((project) => ({
               ...project,
-              status: project.status as "completed" | "ongoing" | "upcoming"
+              status: project.status as "completed" | "ongoing" | "upcoming",
             }));
-            
+
             // Get fresh image URLs for the projects
-            const showcaseProjects = await getProjectsWithFreshImageUrls(typedProjects);
-            
+            const showcaseProjects = await getProjectsWithFreshImageUrls(
+              typedProjects
+            );
+
             setProjects(showcaseProjects);
             setError("");
           }
@@ -186,7 +191,9 @@ export default function ProjectShowcaseClient({
                 </div>
                 {projects.length === 0 ? (
                   <div className="text-center py-16">
-                    <p className="text-gray-500">No {activeTab} projects found</p>
+                    <p className="text-gray-500">
+                      No {activeTab} projects found
+                    </p>
                   </div>
                 ) : (
                   <div className="mt-12 text-center">

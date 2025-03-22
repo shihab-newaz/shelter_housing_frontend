@@ -8,15 +8,23 @@ import { ArrowLeft } from "lucide-react";
 import ProjectDetailClient from "./ProjectDetailClient";
 import { Project } from "@/types/project";
 
+type Params = Promise<{
+  projectType: string;
+  id: string;
+}>;
+
 // This is a server component that fetches data
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: { projectType: string; id: string };
+  params: Params;
 }) {
+  // Await the params Promise to get the actual values
+  const resolvedParams = await params;
+  const { projectType, id } = resolvedParams;
+  
   // Validate project type
   const validTypes = ['completed', 'ongoing', 'upcoming'];
-  const projectType = params.projectType;
   
   if (!validTypes.includes(projectType)) {
     return (
@@ -37,7 +45,7 @@ export default async function ProjectDetailPage({
   }
   
   // Parse and validate the project ID
-  const projectId = parseInt(params.id);
+  const projectId = parseInt(id);
   
   if (isNaN(projectId)) {
     return (
