@@ -7,40 +7,45 @@ import { Edit, Trash, ImageIcon } from "lucide-react";
 import { Project } from "@/types/project";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-
-interface ProjectCardProps {
-  project: Project;
-  onEdit: () => void;
-  onDelete: (id: number) => void;
-  isEditing: boolean;
-}
+import { getImageUrl } from "@/app/actions/imageUrlActions"; // Import your image URL resolver
 
 export function ProjectCard({
   project,
   onEdit,
   onDelete,
   isEditing,
-}: ProjectCardProps) {
+}: {
+  project: Project;
+  onEdit: () => void;
+  onDelete: (id: number) => void;
+  isEditing: boolean;
+}) {
   const [imageError, setImageError] = useState(false);
-  const [imageUrl, setImageUrl] = useState(project.imageUrl);
+  const [processedImageUrl, setProcessedImageUrl] = useState<string>("/SHL.jpg"); // Default fallback
+  const [isLoading, setIsLoading] = useState(true);
 
-  // When project.imageUrl changes, update the state
+  // Process the image URL when the component mounts or when the URL changes
   useEffect(() => {
-    setImageUrl(project.imageUrl);
-    setImageError(false); // Reset error state when image URL changes
+    async function loadImage() {
+      try {
+        setIsLoading(true);
+        const url = await getImageUrl(project.imageUrl);
+        setProcessedImageUrl(url);
+        setImageError(false);
+      } catch (error) {
+        console.error("Failed to process image URL:", error);
+        setImageError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadImage();
   }, [project.imageUrl]);
 
   const handleImageError = () => {
-    console.log(`Image error for ${imageUrl}`);
+    console.log(`Image loading failed for: ${processedImageUrl}`);
     setImageError(true);
-    
-    // Attempt to fallback to a different URL format if the current one fails
-    if (imageUrl.includes('/public/')) {
-      // Try switching to signed URL format
-      const path = imageUrl.split('/public/')[1];
-      console.log(`Attempting fallback with path: ${path}`);
-      // This would be better if implemented with an API route to get a fresh signed URL
-    }
   };
 
   return (
@@ -53,13 +58,13 @@ export function ProjectCard({
                 <ImageIcon className="h-10 w-10 mx-auto text-gray-400" />
                 <p className="text-gray-500 text-sm mt-2">Image unavailable</p>
                 <p className="text-gray-400 text-xs mt-1 max-w-xs mx-auto truncate">
-                  {imageUrl.length > 40 ? `${imageUrl.substring(0, 40)}...` : imageUrl}
+                  {processedImageUrl.length > 40 ? `${processedImageUrl.substring(0, 40)}...` : processedImageUrl}
                 </p>
               </div>
             </div>
           ) : (
             <Image
-              src={imageUrl}
+              src={processedImageUrl}
               alt={project.title}
               fill
               style={{ objectFit: "cover" }}

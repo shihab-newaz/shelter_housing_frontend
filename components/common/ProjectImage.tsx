@@ -1,71 +1,44 @@
-"use client";
-// components/ui/project-image.tsx
-import { useState } from "react";
-import Image, { ImageProps } from "next/image";
-import { ImageIcon } from "lucide-react";
+// components/common/ProjectImage.tsx
+import { getImageUrl } from "@/app/actions/imageUrlActions";
+import { SuspenseImage } from "./SuspenseImage";
+import { Suspense } from "react";
 
-interface ProjectImageProps extends Omit<ImageProps, 'onError'> {
-  fallbackText?: string;
-  iconSize?: number;
+interface ProjectImageProps {
+  src: string;
+  alt?: string;
+  [key: string]: any; 
 }
 
-/**
- * A wrapper around Next.js Image component that handles loading errors gracefully
- */
-export function ProjectImage({
-  fallbackText = "Image could not be loaded",
-  iconSize = 24,
-  alt,
-  ...props
-}: ProjectImageProps) {
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const handleError = () => {
-    setHasError(true);
-    setIsLoading(false);
-  };
-
-  const handleLoad = () => {
-    setIsLoading(false);
-  };
-
+// Image skeleton loader
+function ImageSkeleton() {
   return (
-    <div className="relative w-full h-full">
-      {/* Always render the image, even when there's an error */}
-      <Image
-        alt={alt || "Image"}
-        {...props}
-        onError={handleError}
-        onLoad={handleLoad}
-        className={`${props.className || ''} ${hasError ? 'opacity-0' : isLoading ? 'opacity-30' : 'opacity-100'} transition-opacity duration-300`}
-      />
-      
-      {/* Show loading state */}
-      {isLoading && !hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-            <div className="flex-1 space-y-4 py-1">
-              <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-              <div className="space-y-2">
-                <div className="h-2 bg-gray-200 rounded"></div>
-                <div className="h-2 bg-gray-200 rounded w-5/6"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Show error state */}
-      {hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-90">
-          <div className="text-center p-4">
-            <ImageIcon className={`mx-auto text-gray-400`} style={{ width: iconSize, height: iconSize }} />
-            <p className="text-gray-500 text-sm mt-2">{fallbackText}</p>
-          </div>
-        </div>
-      )}
+    <div className="absolute inset-0 bg-gray-100 animate-pulse">
+      <div className="flex items-center justify-center h-full">
+        <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
+      </div>
     </div>
+  );
+}
+
+// Async component that resolves the image URL
+async function AsyncProjectImage({ src, alt, ...props }: ProjectImageProps) {
+  // Resolve the URL server-side with caching
+  const imageUrl = await getImageUrl(src);
+  
+  return (
+    <SuspenseImage
+      src={imageUrl}
+      alt={alt || "Project image"}
+      {...props}
+    />
+  );
+}
+
+// The main component with Suspense wrapping
+export function ProjectImage(props: ProjectImageProps) {
+  return (
+    <Suspense fallback={<ImageSkeleton />}>
+      <AsyncProjectImage {...props} />
+    </Suspense>
   );
 }

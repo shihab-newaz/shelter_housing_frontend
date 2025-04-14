@@ -1,17 +1,26 @@
 // app/projects/[projectType]/[id]/page.tsx
 import { getProjectById } from "@/app/actions/projectActions";
-import { getProjectWithFreshImageUrls } from "@/app/actions/imageUrlActions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import ProjectDetailClient from "./ProjectDetailClient";
 import { Project } from "@/types/project";
+import { Suspense } from "react";
 
 type Params = Promise<{
   projectType: string;
   id: string;
 }>;
+
+// Loading fallback
+function ProjectDetailLoadingFallback() {
+  return (
+    <div className="min-h-screen flex justify-center items-center">
+      <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
+    </div>
+  );
+}
 
 // This is a server component that fetches data
 export default async function ProjectDetailPage({
@@ -86,13 +95,15 @@ export default async function ProjectDetailPage({
     );
   }
   
-  // Get fresh image URL for the project
-  const projectWithFreshUrl = await getProjectWithFreshImageUrls(result.project as Project);
+  // No need for getProjectWithFreshImageUrls
+  const project = result.project as Project;
   
   return (
-    <ProjectDetailClient 
-      project={projectWithFreshUrl}
-      projectType={projectType}
-    />
+    <Suspense fallback={<ProjectDetailLoadingFallback />}>
+      <ProjectDetailClient 
+        project={project}
+        projectType={projectType}
+      />
+    </Suspense>
   );
 }
