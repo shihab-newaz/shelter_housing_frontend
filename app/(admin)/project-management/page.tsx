@@ -4,7 +4,17 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ProjectManagementClient from './ProjectManagementClient';
 import { Project } from '@/types/project';
-import { getProjectsWithFreshImageUrls } from '@/app/actions/imageUrlActions';
+import { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+
+// Loading fallback for admin panel
+function AdminLoadingFallback() {
+  return (
+    <div className="container mx-auto py-20 px-4 min-h-screen flex justify-center items-center">
+      <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
+    </div>
+  );
+}
 
 // This is a server component
 export default async function ProjectManagementPage() {
@@ -49,10 +59,11 @@ export default async function ProjectManagementPage() {
     }))
   }));
   
-  // Get fresh signed image URLs for all projects
-  const projectsWithFreshUrls = await getProjectsWithFreshImageUrls(projects);
+  // No longer need getProjectsWithFreshImageUrls
   
   return (
-    <ProjectManagementClient initialProjects={projectsWithFreshUrls} />
+    <Suspense fallback={<AdminLoadingFallback />}>
+      <ProjectManagementClient initialProjects={projects} />
+    </Suspense>
   );
 }

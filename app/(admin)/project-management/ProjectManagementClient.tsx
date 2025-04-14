@@ -1,6 +1,5 @@
 "use client";
-
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
@@ -13,11 +12,25 @@ import {
   updateProject,
   deleteProject,
 } from "@/app/actions/projectActions";
-import { getProjectWithFreshImageUrls } from "@/app/actions/imageUrlActions";
 import { toast } from "@/components/ui/use-toast";
 
 interface ProjectManagementClientProps {
   initialProjects: Project[];
+}
+
+// Loading state component for project cards
+function CardLoadingSkeleton() {
+  return (
+    <div className="relative h-full rounded overflow-hidden shadow-lg animate-pulse">
+      <div className="h-40 bg-gray-200"></div>
+      <div className="p-4 space-y-4">
+        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-200 rounded"></div>
+        <div className="h-4 bg-gray-200 rounded"></div>
+        <div className="h-10 bg-gray-200 rounded mt-6"></div>
+      </div>
+    </div>
+  );
 }
 
 export default function ProjectManagementClient({
@@ -26,12 +39,14 @@ export default function ProjectManagementClient({
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const handleCreateSubmit = async (formData: FormData) => {
     setIsSubmitting(true);
+    setError("");
     try {
       const result = await createProject(formData);
 
@@ -42,28 +57,20 @@ export default function ProjectManagementClient({
         });
         setError(result.error);
       } else if (result.project) {
-        // Get fresh image URL for the newly created project
-        const projectWithFreshUrl = await getProjectWithFreshImageUrls(
-          result.project
-        );
-
         toast.default({
           title: "Success",
           description: "Project created successfully",
         });
 
+        // Add the new project to the list - no need for URL processing
         setProjects([
           {
-            ...projectWithFreshUrl,
-            status: projectWithFreshUrl.status as
-              | "completed"
-              | "ongoing"
-              | "upcoming",
+            ...result.project,
+            status: result.project.status as "completed" | "ongoing" | "upcoming",
           },
           ...projects,
         ]);
         setShowForm(false);
-        setError("");
       }
     } catch (err) {
       const errorMessage =
@@ -84,6 +91,7 @@ export default function ProjectManagementClient({
     if (!editingProject) return;
 
     setIsSubmitting(true);
+    setError("");
     try {
       const result = await updateProject(editingProject.id, formData);
 
@@ -94,27 +102,21 @@ export default function ProjectManagementClient({
         });
         setError(result.error);
       } else if (result.project) {
-        // Get fresh image URL for the updated project
-        const projectWithFreshUrl = await getProjectWithFreshImageUrls(
-          result.project
-        );
-
         toast.default({
           title: "Success",
           description: "Project updated successfully",
         });
 
-        // Update projects list with updated project
+        // Update projects list with updated project - no URL processing needed
         setProjects(
           projects.map((p) =>
-            p.id === projectWithFreshUrl.id
-              ? (projectWithFreshUrl as Project)
+            p.id === result.project.id
+              ? { ...result.project, status: result.project.status as "completed" | "ongoing" | "upcoming" }
               : p
           )
         );
 
         setEditingProject(null);
-        setError("");
       }
     } catch (err) {
       const errorMessage =
@@ -126,7 +128,6 @@ export default function ProjectManagementClient({
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
-      // Refresh the page data
       router.refresh();
     }
   };
@@ -136,6 +137,7 @@ export default function ProjectManagementClient({
       return;
     }
 
+    setIsLoading(true);
     try {
       const result = await deleteProject(id);
 
@@ -158,8 +160,6 @@ export default function ProjectManagementClient({
         if (editingProject?.id === id) {
           setEditingProject(null);
         }
-
-        setError("");
       }
     } catch (err) {
       const errorMessage =
@@ -170,30 +170,18 @@ export default function ProjectManagementClient({
       });
       setError(errorMessage);
     } finally {
-      // Refresh the page data
+      setIsLoading(false);
       router.refresh();
     }
   };
 
-  const handleEdit = useCallback(async (project: Project) => {
-    try {
-      // Get fresh image URL before editing
-      const projectWithFreshUrl = await getProjectWithFreshImageUrls(project);
-      setEditingProject(projectWithFreshUrl);
-      setShowForm(false); // Close add form if open
-
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to load project image";
-      toast.destructive({
-        title: "Warning",
-        description: errorMessage,
-      });
-      // Still set the editing project even if image refresh fails
-      setEditingProject(project);
-    }
+  const handleEdit = useCallback((project: Project) => {
+    // No need to get fresh URLs - directly set the project for editing
+    setEditingProject(project);
+    setShowForm(false);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   const handleCancel = () => {
@@ -255,18 +243,26 @@ export default function ProjectManagementClient({
 
       {/* Project List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map((project) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            onEdit={() => handleEdit(project)}
-            onDelete={() => handleDelete(project.id)}
-            isEditing={editingProject?.id === project.id}
-          />
-        ))}
+        {isLoading ? (
+          // Show loading skeletons while loading
+          Array(6).fill(0).map((_, index) => (
+            <CardLoadingSkeleton key={index} />
+          ))
+        ) : (
+          projects.map((project) => (
+            <Suspense key={project.id} fallback={<CardLoadingSkeleton />}>
+              <ProjectCard
+                project={project}
+                onEdit={() => handleEdit(project)}
+                onDelete={() => handleDelete(project.id)}
+                isEditing={editingProject?.id === project.id}
+              />
+            </Suspense>
+          ))
+        )}
       </div>
 
-      {projects.length === 0 && (
+      {projects.length === 0 && !isLoading && (
         <div className="text-center py-20">
           <p className="text-gray-500 mb-4">No projects found</p>
           <Button onClick={() => setShowForm(true)}>

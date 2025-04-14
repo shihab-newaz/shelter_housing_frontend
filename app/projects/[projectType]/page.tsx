@@ -1,13 +1,22 @@
 // app/projects/[projectType]/page.tsx
 import { getProjects } from "@/app/actions/projectActions";
-import { getProjectsWithFreshImageUrls } from "@/app/actions/imageUrlActions";
 import ProjectListClient from "./ProjectListClient";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Project } from "@/types/project";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 type Params = Promise<{
   projectType: string;
 }>;
+
+// Loading fallback
+function ProjectsLoadingFallback() {
+  return (
+    <div className="container mx-auto px-4 py-24 flex justify-center items-center">
+      <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
+    </div>
+  );
+}
 
 // This is a server component that fetches data
 export default async function ProjectTypePage({ 
@@ -54,13 +63,14 @@ export default async function ProjectTypePage({
     status: project.status as 'completed' | 'ongoing' | 'upcoming'
   }));
   
-  // Get fresh image URLs for all projects
-  const projectsWithFreshUrls = await getProjectsWithFreshImageUrls(typedProjects);
+  // No need for getProjectsWithFreshImageUrls anymore
   
   return (
-    <ProjectListClient 
-      projects={projectsWithFreshUrls} 
-      projectType={typedProjectType} 
-    />
+    <Suspense fallback={<ProjectsLoadingFallback />}>
+      <ProjectListClient 
+        projects={typedProjects} 
+        projectType={typedProjectType} 
+      />
+    </Suspense>
   );
 }

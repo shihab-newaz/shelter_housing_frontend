@@ -1,7 +1,6 @@
 "use client";
-// app/components/ProjectShowcaseClient.tsx
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
   Card,
   CardContent,
@@ -17,17 +16,16 @@ import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Project } from "@/types/project";
 import { getProjects } from "@/app/actions/projectActions";
-import { getProjectsWithFreshImageUrls } from "@/app/actions/imageUrlActions";
-import { ProjectImage } from "@/components/common/ProjectImage";
-import { use } from "react";
+import { SuspenseImage } from "@/components/common/SuspenseImage";
+
 type ProjectStatus = "ongoing" | "completed" | "upcoming";
 
 interface ProjectShowcaseClientProps {
   initialProjects: Project[];
   initialTab: ProjectStatus;
-  params?: Promise<any>;
 }
 
+// Status badge component
 const StatusBadge = ({ status }: { status: ProjectStatus }) => {
   const statusColors = {
     completed: "bg-blue-600",
@@ -42,26 +40,31 @@ const StatusBadge = ({ status }: { status: ProjectStatus }) => {
   );
 };
 
-const ProjectCard = ({
-  project,
-  status,
-}: {
-  project: Project;
-  status: ProjectStatus;
-}) => (
+// Loading placeholder
+const ProjectsLoadingState = () => (
+  <div className="flex justify-center items-center h-96">
+    <Loader2 className="h-8 w-8 animate-spin" />
+  </div>
+);
+
+// Individual project card component with suspense image
+const ProjectCard = ({ project, status }: { project: Project; status: ProjectStatus }) => (
   <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group">
     <CardHeader className="p-0">
       <div className="relative h-96 overflow-hidden bg-gray-100">
-        <ProjectImage
-          src={project.imageUrl}
-          alt={project.title}
-          fill
-          sizes="(max-width: 800px) 100vw, 800px"
-          priority={false}
-          className="object-contain w-full h-full transition-all duration-700 ease-in-out"
-          fallbackText="Project image unavailable"
-          iconSize={36}
-        />
+        <Suspense fallback={
+          <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        }>
+          <SuspenseImage
+            src={project.imageUrl}
+            alt={project.title}
+            fill
+            sizes="(max-width: 800px) 100vw, 800px"
+            className="object-contain w-full h-full transition-all duration-500 ease-in-out"
+          />
+        </Suspense>
         <StatusBadge status={status} />
       </div>
     </CardHeader>
@@ -100,51 +103,67 @@ const ProjectCard = ({
   </Card>
 );
 
+// Project grid component
+const ProjectGrid = ({ projects, status }: { projects: Project[]; status: ProjectStatus }) => (
+  <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+      {projects.map((project) => (
+        <ProjectCard key={project.id} project={project} status={status} />
+      ))}
+    </div>
+    {projects.length === 0 ? (
+      <div className="text-center py-16">
+        <p className="text-gray-500">No {status} projects found</p>
+      </div>
+    ) : (
+      <div className="mt-12 text-center">
+        <Link href={`/projects/${status}`}>
+          <Button
+            variant="outline"
+            className="px-8 py-2 hover:bg-blue-600 hover:text-white transition-colors"
+          >
+            See All {status.charAt(0).toUpperCase() + status.slice(1)} Projects
+          </Button>
+        </Link>
+      </div>
+    )}
+  </>
+);
+
+// Main component
 export default function ProjectShowcaseClient({
   initialProjects,
   initialTab,
-  params,
 }: ProjectShowcaseClientProps) {
-  // const resolvedParams = params ? use(params) : null;
   const [activeTab, setActiveTab] = useState<ProjectStatus>(initialTab);
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [isLoading, setIsLoading] = useState(initialProjects.length === 0);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Only fetch if changing from the initial tab or if no initial projects were provided
+    // Only fetch if changing tabs or no initial projects
     if (activeTab !== initialTab || initialProjects.length === 0) {
       const fetchProjects = async () => {
         try {
           setIsLoading(true);
-
-          // Use the server action to fetch projects
           const result = await getProjects(activeTab);
 
           if (result.error) {
             setError(result.error);
           } else if (result.projects) {
-            // Only take the first two projects for the showcase
+            // Take first two projects for showcase
             const projectsSlice = result.projects.slice(0, 2);
-
-            // Explicitly cast status to the correct type to satisfy TypeScript
             const typedProjects = projectsSlice.map((project) => ({
               ...project,
               status: project.status as "completed" | "ongoing" | "upcoming",
             }));
-
-            // Get fresh image URLs for the projects
-            const showcaseProjects = await getProjectsWithFreshImageUrls(
-              typedProjects
-            );
-
-            setProjects(showcaseProjects);
+            
+            // No need for getProjectsWithFreshImageUrls - our SuspenseImage handles URLs
+            setProjects(typedProjects);
             setError("");
           }
         } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load projects"
-          );
+          setError(err instanceof Error ? err.message : "Failed to load projects");
         } finally {
           setIsLoading(false);
         }
@@ -171,44 +190,16 @@ export default function ProjectShowcaseClient({
 
           <div className="min-h-[400px]">
             {isLoading ? (
-              <div className="flex justify-center items-center h-96">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
+              <ProjectsLoadingState />
             ) : error ? (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             ) : (
               <TabsContent value={activeTab} forceMount>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                  {projects.map((project) => (
-                    <ProjectCard
-                      key={project.id}
-                      project={project}
-                      status={activeTab}
-                    />
-                  ))}
-                </div>
-                {projects.length === 0 ? (
-                  <div className="text-center py-16">
-                    <p className="text-gray-500">
-                      No {activeTab} projects found
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-12 text-center">
-                    <Link href={`/projects/${activeTab}`}>
-                      <Button
-                        variant="outline"
-                        className="px-8 py-2 hover:bg-blue-600 hover:text-white transition-colors"
-                      >
-                        See All{" "}
-                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}{" "}
-                        Projects
-                      </Button>
-                    </Link>
-                  </div>
-                )}
+                <Suspense fallback={<ProjectsLoadingState />}>
+                  <ProjectGrid projects={projects} status={activeTab} />
+                </Suspense>
               </TabsContent>
             )}
           </div>
