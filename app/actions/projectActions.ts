@@ -9,16 +9,22 @@ import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 
 /**
- * Upload a file to Supabase Storage
+ * Upload a file to Supabase Storage and return the public URL
  * @param file The file to upload
- * @returns The storage path (not the full URL)
+ * @returns The complete public URL (not just the path)
  */
 async function uploadFileToStorage(file: File): Promise<string> {
   try {
+    console.log(`uploadFileToStorage: Starting upload for file "${file.name}"`);
+    
     // Generate a unique file path
+    const timestamp = Date.now();
+    const randomString = crypto.randomBytes(8).toString('hex');
     const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const fileName = `${crypto.randomBytes(16).toString('hex')}.${fileExtension}`;
+    const fileName = `${timestamp}-${randomString}.${fileExtension}`;
     const filePath = `projects/${fileName}`;
+    
+    console.log(`uploadFileToStorage: Generated path = "${filePath}"`);
 
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
@@ -29,21 +35,29 @@ async function uploadFileToStorage(file: File): Promise<string> {
       .from('project-images')
       .upload(filePath, fileData, {
         contentType: file.type,
-        cacheControl: '3600',
+        cacheControl: '31536000', // 1 year
         upsert: true
       });
 
     if (error) {
-      console.error('Storage upload error:', error);
+      console.error('uploadFileToStorage: Storage upload error:', error);
       throw new Error(`Upload failed: ${error.message}`);
     }
 
-    console.log(`File uploaded successfully to path: ${filePath}`);
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('project-images')
+      .getPublicUrl(filePath);
+      
+    console.log(`uploadFileToStorage: Uploaded successfully, public URL = "${publicUrlData.publicUrl}"`);
     
-    // Return just the storage path, not the full URL
-    return filePath;
+    // For debugging existing patterns in your app
+    console.log(`uploadFileToStorage: Previously would have returned path = "${filePath}"`);
+    
+    // Return the complete public URL instead of just the path
+    return publicUrlData.publicUrl;
   } catch (error) {
-    console.error('File upload error:', error);
+    console.error('uploadFileToStorage: File upload error:', error);
     throw error;
   }
 }
