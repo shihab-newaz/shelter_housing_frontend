@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Lato, Gothic_A1 } from "next/font/google";
 import Navbar from "@/components/persistent/Navbar";
 import Footer from "@/components/persistent/Footer";
@@ -68,7 +69,12 @@ export const metadata: Metadata = {
     "affordable housing",
     "modern living",
   ],
-  authors: [{ name: "Shelter Housing Limited", url: "https://shelterhousinglimited.com" }],
+  authors: [
+    {
+      name: "Shelter Housing Limited",
+      url: "https://shelterhousinglimited.com",
+    },
+  ],
   creator: "Shelter Housing Limited",
   publisher: "Shelter Housing Limited",
   robots: {
@@ -77,15 +83,15 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   alternates: {
     canonical: "https://shelterhousinglimited.com",
     languages: {
-      'en-US': "https://shelterhousinglimited.com",
-      'bn-BD': "https://shelterhousinglimited.com/bn",
+      "en-US": "https://shelterhousinglimited.com",
+      "bn-BD": "https://shelterhousinglimited.com/bn",
     },
   },
   formatDetection: {
@@ -127,10 +133,10 @@ export const metadata: Metadata = {
   category: "Real Estate",
   applicationName: "Shelter Housing Ltd",
   other: {
-    'msapplication-TileColor': '#2b5797',
-    'theme-color': '#ffffff',
-    'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    "msapplication-TileColor": "#2b5797",
+    "theme-color": "#ffffff",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
   },
 };
 
@@ -140,8 +146,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html 
-      lang="en" 
+    <html
+      lang="en"
       className={`${gothic.variable} ${lato.variable}`}
       suppressHydrationWarning
     >
@@ -153,29 +159,29 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "Shelter Housing Limited",
-              "url": "https://shelterhousinglimited.com",
-              "logo": "https://shelterhousinglimited.com/logo.png",
-              "sameAs": [
+              name: "Shelter Housing Limited",
+              url: "https://shelterhousinglimited.com",
+              logo: "https://shelterhousinglimited.com/logo.png",
+              sameAs: [
                 "https://www.facebook.com/@shelterhousinglimited",
                 "https://www.linkedin.com/company/shelterhousingltd/",
-                "https://twitter.com/shelterhousinglimited"
+                "https://twitter.com/shelterhousinglimited",
               ],
-              "contactPoint": {
+              contactPoint: {
                 "@type": "ContactPoint",
-                "telephone": "+880-xxx-xxxxxx",
-                "contactType": "customer service",
-                "availableLanguage": ["English", "Bengali"]
+                telephone: "+880-xxx-xxxxxx",
+                contactType: "customer service",
+                availableLanguage: ["English", "Bengali"],
               },
-              "address": {
+              address: {
                 "@type": "PostalAddress",
-                "streetAddress": "123 Real Estate Avenue",
-                "addressLocality": "Dhaka",
-                "addressRegion": "Dhaka",
-                "postalCode": "1000",
-                "addressCountry": "BD"
-              }
-            })
+                streetAddress: "123 Real Estate Avenue",
+                addressLocality: "Dhaka",
+                addressRegion: "Dhaka",
+                postalCode: "1000",
+                addressCountry: "BD",
+              },
+            }),
           }}
         />
       </head>
@@ -188,12 +194,13 @@ export default function RootLayout({
             </header>
             <main className="flex-grow">
               {children}
+              <Analytics />
+              <SpeedInsights />
             </main>
             <Footer />
           </div>
           <Toaster />
         </AuthProvider>
-        <Analytics />
       </body>
     </html>
   );
