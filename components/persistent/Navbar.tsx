@@ -49,7 +49,7 @@ export default function Navbar() {
             className="rounded"
           />
           <span className="text-2xl font-bold text-white">
-            Shelter Housing Limited.
+            Shelter Housing Limited
           </span>
         </Link>
 

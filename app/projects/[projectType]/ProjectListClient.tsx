@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Project } from "@/types/project";
 import { useState } from "react";
 import { ImageIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface ProjectListClientProps {
   projects: Project[];
@@ -16,7 +17,8 @@ interface ProjectListClientProps {
 
 export default function ProjectListClient({ projects, projectType }: ProjectListClientProps) {
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
-  
+  const [search, setSearch] = useState<string>("");
+
   const handleImageError = (projectId: number) => {
     setImageErrors(prev => ({
       ...prev,
@@ -29,20 +31,33 @@ export default function ProjectListClient({ projects, projectType }: ProjectList
       <h1 className="text-4xl font-bold text-center mb-8 capitalize">
         {projectType} Projects
       </h1>
+
+      <div className="mb-4">
+        <Input
+          type="search"
+          placeholder="Search projects..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {projects.map((project) => (
-          <Card key={project.id} className="overflow-hidden shadow-lg">
-            <CardHeader className="p-0">
-              <div className="relative h-64">
-                <Image
-                  src={project.imageUrl}
-                  alt={project.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
-                  onError={() => handleImageError(project.id)}
-                />
+        {projects
+          .filter((project) =>
+            project.title.toLowerCase().includes(search.toLowerCase())
+          )
+          .map((project) => (
+            <Card key={project.id} className="overflow-hidden shadow-lg">
+              <CardHeader className="p-0">
+                <div className="relative h-64">
+                  <Image
+                    src={project.imageUrl}
+                    alt={project.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover"
+                    onError={() => handleImageError(project.id)}
+                  />
                 {imageErrors[project.id] && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-90">
                     <div className="text-center">

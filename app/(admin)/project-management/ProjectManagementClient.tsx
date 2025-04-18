@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ProjectFormWithUpload } from "./components/ProjectForm";
 import { ProjectCard } from "./components/ProjectCard";
 import { Project } from "@/types/project";
+import { Input } from "@/components/ui/input";
 import {
   createProject,
   updateProject,
@@ -25,6 +26,7 @@ export default function ProjectManagementClient({
 }: ProjectManagementClientProps) {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [search, setSearch] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -214,6 +216,15 @@ export default function ProjectManagementClient({
         </Button>
       </div>
 
+      <div className="mb-4">
+        <Input
+          type="search"
+          placeholder="Search projects..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertTitle>Error</AlertTitle>
@@ -255,15 +266,19 @@ export default function ProjectManagementClient({
 
       {/* Project List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map((project) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            onEdit={() => handleEdit(project)}
-            onDelete={() => handleDelete(project.id)}
-            isEditing={editingProject?.id === project.id}
-          />
-        ))}
+        {projects
+          .filter((project) =>
+            project.title.toLowerCase().includes(search.toLowerCase())
+          )
+          .map((project) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onEdit={() => handleEdit(project)}
+              onDelete={() => handleDelete(project.id)}
+              isEditing={editingProject?.id === project.id}
+            />
+          ))}
       </div>
 
       {projects.length === 0 && (
