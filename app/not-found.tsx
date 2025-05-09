@@ -17,7 +17,7 @@ export default function NotFound() {
           className="rounded"
         />
         <span className="text-2xl font-bold text-gray-900">
-          Shelter Housing
+          Shelter Housing Ltd.
         </span>
       </Link>
 

@@ -24,12 +24,13 @@ export default function Toolbar() {
     isHovered: false,
     hoveredItem: null
   })
-  const [phoneHref, setPhoneHref] = useState('tel:+01614542234')
+  const numberToShow = '+09617335588'
+  const [phoneHref, setPhoneHref] = useState(`tel:${numberToShow}`)
 
   // Detect device type and set appropriate phone protocol
   useEffect(() => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-    setPhoneHref(isMobile ? 'tel:+01614542234' : 'callto:+01614542234')
+    setPhoneHref(isMobile ? `tel:${numberToShow}` : `callto:${numberToShow}`)
   }, [])
 
   /**
@@ -42,7 +43,7 @@ export default function Toolbar() {
       window.location.href = phoneHref
       // Fallback to tel: protocol if callto: fails
       setTimeout(() => {
-        window.location.href = 'tel:+01614542234'
+        window.location.href = `tel:${numberToShow}`
       }, 100)
     }
   }

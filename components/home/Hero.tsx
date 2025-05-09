@@ -25,7 +25,7 @@ export default function Hero() {
             delay={500}
             startOnView={true}
           >
-            Shelter Housing Limited
+            Shelter Housing Ltd.
           </TextAnimate>
           
           <TextAnimate

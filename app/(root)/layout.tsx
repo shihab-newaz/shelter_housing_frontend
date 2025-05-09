@@ -7,7 +7,7 @@ import Footer from "@/components/persistent/Footer";
 import Toolbar from "@/components/persistent/Toolbar";
 import { Toaster } from "@/components/ui/use-toast";
 import { AuthProvider } from "@/components/auth/provider";
-import "./globals.css";
+import "@/styles/globals.css";
 
 // Load fonts
 const gothic = Gothic_A1({
