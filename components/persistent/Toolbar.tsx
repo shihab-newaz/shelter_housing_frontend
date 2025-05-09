@@ -24,7 +24,7 @@ export default function Toolbar() {
     isHovered: false,
     hoveredItem: null
   })
-  const numberToShow = '+09617335588'
+  const numberToShow = '09617335588'
   const [phoneHref, setPhoneHref] = useState(`tel:${numberToShow}`)
 
   // Detect device type and set appropriate phone protocol
